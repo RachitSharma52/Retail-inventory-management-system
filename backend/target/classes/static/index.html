@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Retail Inventory & Warehouse Backend Console</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0f17;
+      --card-bg: #111827;
+      --card-border: #1f2937;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+      --sidebar-w: 240px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'DM Sans', sans-serif; }
+    body { background: var(--bg); color: var(--text); min-height: 100vh; display: flex; }
+    
+    /* Sidebar */
+    .sidebar { width: var(--sidebar-w); background: #080c14; border-right: 1px solid var(--card-border); padding: 24px 16px; display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; }
+    .brand { font-size: 1.1rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 10px; margin-bottom: 24px; padding-left: 8px; }
+    .brand-badge { background: var(--primary); color: #fff; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+    .nav-btn { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-radius: 8px; color: var(--text-muted); text-decoration: none; cursor: pointer; transition: all 0.2s; background: transparent; border: none; font-size: 0.92rem; width: 100%; text-align: left; }
+    .nav-btn:hover { background: #1f2937; color: #fff; }
+    .nav-btn.active { background: #1e3a8a; color: #93c5fd; font-weight: 600; }
+    .badge { background: #1e293b; color: #cbd5e1; font-size: 0.75rem; padding: 2px 8px; border-radius: 12px; font-weight: 600; }
+
+    /* Main Area */
+    .main { flex: 1; padding: 32px; overflow-y: auto; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; flex-wrap: wrap; gap: 16px; }
+    .header h1 { font-size: 1.6rem; font-weight: 700; }
+    .header p { color: var(--text-muted); font-size: 0.9rem; margin-top: 4px; }
+    .db-status { display: flex; align-items: center; gap: 8px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: #34d399; padding: 6px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 600; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #10b981; box-shadow: 0 0 8px #10b981; }
+
+    /* Stats Grid */
+    .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px; }
+    .metric-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 20px; }
+    .metric-card span { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em; }
+    .metric-card h2 { font-size: 1.8rem; font-weight: 700; margin-top: 8px; color: #fff; }
+
+    /* Content Card & Table */
+    .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; overflow: hidden; }
+    .card-head { padding: 18px 24px; border-bottom: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center; }
+    .card-head h3 { font-size: 1.1rem; font-weight: 600; }
+    .table-container { overflow-x: auto; max-height: 520px; }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem; }
+    th { background: #0f172a; padding: 12px 20px; color: #94a3b8; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--card-border); }
+    td { padding: 14px 20px; border-bottom: 1px solid #1e293b; color: #e2e8f0; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255, 255, 255, 0.02); }
+    .mono { font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; color: #93c5fd; }
+    .tag { display: inline-block; padding: 3px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; }
+    .tag-success { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+    .tag-warning { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+    .tag-danger { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+    .tag-info { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+
+    .btn { background: var(--primary); color: #fff; padding: 8px 16px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; }
+    .btn:hover { background: var(--primary-hover); }
+    .btn-secondary { background: #1f2937; color: #e5e7eb; }
+    .btn-secondary:hover { background: #374151; }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="brand">
+      <span>📦 RetailHub</span>
+      <span class="brand-badge">Spring Boot</span>
+    </div>
+    <button class="nav-btn active" onclick="loadSection('products', this)">
+      <span>Products</span>
+      <span class="badge" id="badge-products">-</span>
+    </button>
+    <button class="nav-btn" onclick="loadSection('warehouses', this)">
+      <span>Warehouses</span>
+      <span class="badge" id="badge-warehouses">-</span>
+    </button>
+    <button class="nav-btn" onclick="loadSection('orders', this)">
+      <span>Orders</span>
+      <span class="badge" id="badge-orders">-</span>
+    </button>
+    <button class="nav-btn" onclick="loadSection('suppliers', this)">
+      <span>Suppliers</span>
+      <span class="badge" id="badge-suppliers">-</span>
+    </button>
+    <button class="nav-btn" onclick="loadSection('customers', this)">
+      <span>Customers</span>
+      <span class="badge" id="badge-customers">-</span>
+    </button>
+    <button class="nav-btn" onclick="loadSection('categories', this)">
+      <span>Categories</span>
+      <span class="badge" id="badge-categories">-</span>
+    </button>
+    <button class="nav-btn" onclick="loadSection('transfers', this)">
+      <span>Transfers</span>
+      <span class="badge" id="badge-transfers">-</span>
+    </button>
+
+    <div style="margin-top: auto; padding-top: 16px; border-top: 1px solid var(--card-border);">
+      <a href="/swagger-ui/index.html" target="_blank" class="nav-btn" style="color: #60a5fa;">
+        <span>📖 Swagger API UI</span>
+        <span>↗</span>
+      </a>
+      <a href="http://localhost:5173" target="_blank" class="nav-btn" style="color: #34d399;">
+        <span>🖥️ React Frontend</span>
+        <span>↗</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main Body -->
+  <main class="main">
+    <div class="header">
+      <div>
+        <h1>Backend Management Console</h1>
+        <p>Connected live to MySQL Database: <b style="color: #60a5fa;">inventory</b></p>
+      </div>
+      <div style="display: flex; gap: 12px; align-items: center;">
+        <div class="db-status">
+          <span class="status-dot"></span>
+          <span>MySQL: Connected (root@localhost)</span>
+        </div>
+        <button class="btn btn-secondary" onclick="refreshCurrent()">↻ Refresh</button>
+      </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="metrics" id="metrics-grid">
+      <div class="metric-card">
+        <span>Total Products</span>
+        <h2 id="m-products">-</h2>
+      </div>
+      <div class="metric-card">
+        <span>Total Stock Units</span>
+        <h2 id="m-units">-</h2>
+      </div>
+      <div class="metric-card">
+        <span>Inventory Value</span>
+        <h2 id="m-value">-</h2>
+      </div>
+      <div class="metric-card">
+        <span>Low Stock Alert</span>
+        <h2 id="m-low" style="color: #f87171;">-</h2>
+      </div>
+    </div>
+
+    <!-- Data Table Container -->
+    <div class="card">
+      <div class="card-head">
+        <h3 id="table-title">Inventory Products</h3>
+        <span id="record-count" style="color: var(--text-muted); font-size: 0.85rem;">Loading...</span>
+      </div>
+      <div class="table-container">
+        <table id="data-table">
+          <thead id="table-head"></thead>
+          <tbody id="table-body">
+            <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">Loading database records...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let currentTab = 'products';
+
+    const COLUMNS = {
+      products: ['SKU', 'Product Name', 'Category', 'Warehouse', 'Stock', 'Price (₹)', 'Status'],
+      warehouses: ['Code', 'Name', 'City', 'Manager', 'Capacity %', 'Stored Items', 'Status'],
+      orders: ['Order ID', 'Customer / Party', 'Date', 'Type', 'Amount (₹)', 'Status'],
+      suppliers: ['Name', 'Contact', 'Email', 'City', 'Phone', 'Rating', 'Status'],
+      customers: ['Code', 'Customer Name', 'Contact', 'Email', 'City', 'Orders', 'Status'],
+      categories: ['Code', 'Name', 'Products', 'Units', 'Value (₹)', 'Status'],
+      transfers: ['Transfer ID', 'From Location', 'To Location', 'Lines', 'Units', 'Date', 'Status']
+    };
+
+    function formatTag(val) {
+      if (!val) return '';
+      const v = String(val).toLowerCase();
+      if (['in stock', 'active', 'operational', 'completed', 'delivered'].includes(v)) return `<span class="tag tag-success">${val}</span>`;
+      if (['low stock', 'pending', 'processing', 'in transit', 'near capacity'].includes(v)) return `<span class="tag tag-warning">${val}</span>`;
+      if (['out of stock', 'cancelled', 'on hold'].includes(v)) return `<span class="tag tag-danger">${val}</span>`;
+      return `<span class="tag tag-info">${val}</span>`;
+    }
+
+    async function fetchSummary() {
+      try {
+        const res = await fetch('/api/reports/summary');
+        const json = await res.json();
+        if (json.success && json.data) {
+          const d = json.data;
+          document.getElementById('m-products').textContent = d.totalProducts || 0;
+          document.getElementById('m-units').textContent = (d.totalUnits || 0).toLocaleString('en-IN');
+          document.getElementById('m-value').textContent = '₹' + (d.inventoryValue || 0).toLocaleString('en-IN');
+          document.getElementById('m-low').textContent = d.lowStockItems || 0;
+          document.getElementById('badge-products').textContent = d.totalProducts || 0;
+          document.getElementById('badge-warehouses').textContent = d.warehouseCount || 0;
+        }
+      } catch (err) {
+        console.error('Summary fetch error:', err);
+      }
+    }
+
+    async function loadSection(tab, btnEl) {
+      currentTab = tab;
+      if (btnEl) {
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        btnEl.classList.add('active');
+      }
+
+      document.getElementById('table-title').textContent = tab.charAt(0).toUpperCase() + tab.slice(1);
+      document.getElementById('table-body').innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 30px;">Fetching from MySQL...</td></tr>`;
+
+      // Set headers
+      const cols = COLUMNS[tab];
+      document.getElementById('table-head').innerHTML = `<tr>${cols.map(c => `<th>${c}</th>`).join('')}</tr>`;
+
+      try {
+        const endpoint = tab === 'products' ? '/api/inventory' : `/api/${tab}`;
+        const res = await fetch(endpoint);
+        const json = await res.json();
+        const rows = json.data || [];
+
+        document.getElementById(`badge-${tab}`) && (document.getElementById(`badge-${tab}`).textContent = rows.length);
+        document.getElementById('record-count').textContent = `${rows.length} records found in MySQL`;
+
+        if (rows.length === 0) {
+          document.getElementById('table-body').innerHTML = `<tr><td colspan="${cols.length}" style="text-align: center; color: var(--text-muted); padding: 30px;">No records found in database.</td></tr>`;
+          return;
+        }
+
+        const html = rows.map(r => {
+          if (tab === 'products') {
+            return `<tr>
+              <td class="mono">${r.sku || '-'}</td>
+              <td><b>${r.name || '-'}</b></td>
+              <td>${r.category || '-'}</td>
+              <td>${r.warehouse || '-'}</td>
+              <td><b>${r.stock ?? 0}</b></td>
+              <td>₹${Number(r.unitPrice || 0).toLocaleString('en-IN')}</td>
+              <td>${formatTag(r.status)}</td>
+            </tr>`;
+          }
+          if (tab === 'warehouses') {
+            return `<tr>
+              <td class="mono">${r.code || '-'}</td>
+              <td><b>${r.name || '-'}</b></td>
+              <td>${r.city || '-'}</td>
+              <td>${r.manager || '-'}</td>
+              <td>${r.capacity || 0}%</td>
+              <td>${Number(r.itemCount || 0).toLocaleString('en-IN')}</td>
+              <td>${formatTag(r.status)}</td>
+            </tr>`;
+          }
+          if (tab === 'orders') {
+            return `<tr>
+              <td class="mono">${r.id || '-'}</td>
+              <td><b>${r.party || '-'}</b></td>
+              <td>${r.date || '-'}</td>
+              <td><span class="tag tag-info">${r.type || 'Sales'}</span></td>
+              <td><b>₹${Number(r.amount || 0).toLocaleString('en-IN')}</b></td>
+              <td>${formatTag(r.status)}</td>
+            </tr>`;
+          }
+          if (tab === 'suppliers') {
+            return `<tr>
+              <td><b>${r.name || '-'}</b></td>
+              <td>${r.contact || '-'}</td>
+              <td>${r.email || '-'}</td>
+              <td>${r.city || '-'}</td>
+              <td>${r.phone || '-'}</td>
+              <td>⭐ ${r.rating || '4.5'}</td>
+              <td>${formatTag(r.status)}</td>
+            </tr>`;
+          }
+          if (tab === 'customers') {
+            return `<tr>
+              <td class="mono">${r.code || '-'}</td>
+              <td><b>${r.name || '-'}</b></td>
+              <td>${r.contact || '-'}</td>
+              <td>${r.email || '-'}</td>
+              <td>${r.city || '-'}</td>
+              <td>${r.orders || 0}</td>
+              <td>${formatTag(r.status)}</td>
+            </tr>`;
+          }
+          if (tab === 'categories') {
+            return `<tr>
+              <td class="mono">${r.code || '-'}</td>
+              <td><b>${r.name || '-'}</b></td>
+              <td>${r.productCount || 0}</td>
+              <td>${Number(r.units || 0).toLocaleString('en-IN')}</td>
+              <td>₹${Number(r.value || 0).toLocaleString('en-IN')}</td>
+              <td>${formatTag(r.status)}</td>
+            </tr>`;
+          }
+          if (tab === 'transfers') {
+            return `<tr>
+              <td class="mono">${r.id || '-'}</td>
+              <td>${r.from || '-'}</td>
+              <td>${r.to || '-'}</td>
+              <td>${r.items || 1}</td>
+              <td><b>${r.units || 0}</b></td>
+              <td>${r.date || '-'}</td>
+              <td>${formatTag(r.status)}</td>
+            </tr>`;
+          }
+          return '';
+        }).join('');
+
+        document.getElementById('table-body').innerHTML = html;
+      } catch (err) {
+        document.getElementById('table-body').innerHTML = `<tr><td colspan="${cols.length}" style="text-align: center; color: #ef4444; padding: 30px;">Error loading data: ${err.message}</td></tr>`;
+      }
+    }
+
+    function refreshCurrent() {
+      fetchSummary();
+      loadSection(currentTab);
+    }
+
+    // Init
+    fetchSummary();
+    loadSection('products');
+  </script>
+</body>
+</html>

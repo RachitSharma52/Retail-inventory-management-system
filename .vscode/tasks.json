@@ -1,0 +1,31 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "1. Run Spring Boot Backend (Port 8080)",
+      "type": "shell",
+      "command": "java -jar target/retail-inventory-backend-1.0.0.jar",
+      "options": {
+        "cwd": "${workspaceFolder}/backend"
+      },
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "2. Run React Frontend (Port 5173)",
+      "type": "shell",
+      "command": "npm run dev",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "3. Query MySQL Database (VS Code Terminal)",
+      "type": "shell",
+      "command": "& 'C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysql.exe' -u root -proot123 -e 'USE inventory; SHOW TABLES; SELECT id, sku, name, category, warehouse, stock, unit_price FROM products;'",
+      "problemMatcher": []
+    }
+  ]
+}
